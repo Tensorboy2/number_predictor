@@ -14,6 +14,7 @@ const RnnPredictor: React.FC = () => {
   const [modelType, setModelType] = useState('LSTM'); // Model type selection
   const [lossData, setLossData] = useState<number[]>([]);
   const [labels, setLabels] = useState<number[]>([]);
+  const [isTraining, setIsTraining] = useState(false); // State to track training status
 
   // Initialize model based on user selection
   useEffect(() => {
@@ -41,17 +42,21 @@ const RnnPredictor: React.FC = () => {
   // Train the model whenever sequence changes
   useEffect(() => {
     if (model && sequence.length > 1) {
+      setIsTraining(true); // Set training status to true
       const inputTensor = tf.tensor(sequence.slice(0, -1)).reshape([sequence.length - 1, 1, 1]);
       const targetTensor = tf.tensor(sequence.slice(1)).reshape([sequence.length - 1, 1]);
-      
+
       model.fit(inputTensor, targetTensor, {
         epochs,
         callbacks: {
           onEpochEnd: async (epoch, logs) => {
             setLossData(prev => [...prev, logs?.loss ?? 0]);
             setLabels(prev => [...prev, epoch + 1]);
-          }
-        }
+          },
+          onTrainEnd: () => {
+            setIsTraining(false); // Set training status to false after training is done
+          },
+        },
       }).then(() => {
         const lastInput = tf.tensor([sequence[sequence.length - 1]]).reshape([1, 1, 1]);
         const output = model.predict(lastInput) as tf.Tensor;
@@ -100,16 +105,17 @@ const RnnPredictor: React.FC = () => {
       </div>
       <div className='buttonWrapper'>
         {Array.from({ length: 10 }, (_, i) => (
-          <button className='button' key={i} onClick={() => handleClick(i)}>{i}</button>
+          <button className='button' key={i} onClick={() => handleClick(i)} disabled={isTraining}>{i}</button>
         ))}
       </div>
       <div>Sequence: {sequence.join(', ')}</div>
       <div className='prediction'>Prediction: {prediction !== null ? prediction : 'N/A'}</div>
 
+      {isTraining && <div>Training in progress... <span className="spinner"></span></div>}
+
       <div>
         <h3>Training Loss Over Epochs</h3>
         <Line
-          className='plot'
           data={{
             labels: labels,
             datasets: [{
@@ -122,6 +128,22 @@ const RnnPredictor: React.FC = () => {
           }}
         />
       </div>
+
+      <style>{`
+        .spinner {
+          border: 4px solid rgba(0, 0, 0, 0.1);
+          border-left-color: #4caf50;
+          border-radius: 50%;
+          width: 24px;
+          height: 24px;
+          animation: spin 1s linear infinite;
+          display: inline-block;
+          margin-left: 10px;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
