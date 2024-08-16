@@ -89,7 +89,7 @@ const RnnPredictor: React.FC = () => {
     <div>
       <div>
         <label>Model Type: </label>
-        <select value={modelType} onChange={handleModelTypeChange}>
+        <select className='models' value={modelType} onChange={handleModelTypeChange}>
           <option value="SimpleRNN">Simple RNN</option>
           <option value="LSTM">LSTM</option>
           <option value="GRU">GRU</option>
@@ -97,11 +97,11 @@ const RnnPredictor: React.FC = () => {
       </div>
       <div>
         <label>Units: </label>
-        <input type="number" value={units} onChange={handleUnitsChange} min="1" max="100" />
+        <input className='units' type="number" value={units} onChange={handleUnitsChange} min="1" max="100" />
       </div>
       <div>
         <label>Epochs: </label>
-        <input type="number" value={epochs} onChange={handleEpochsChange} min="1" max="100" />
+        <input className='epochs' type="number" value={epochs} onChange={handleEpochsChange} min="1" max="100" />
       </div>
       <div className='buttonWrapper'>
         {Array.from({ length: 10 }, (_, i) => (
@@ -116,6 +116,7 @@ const RnnPredictor: React.FC = () => {
       <div>
         <h3>Training Loss Over Epochs</h3>
         <Line
+        className='plot'
           data={{
             labels: labels,
             datasets: [{

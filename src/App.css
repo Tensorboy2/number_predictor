@@ -9,7 +9,7 @@
 }
 
 .plot {
-  background-color: #e8ebf29f;
+  background-color: #ffffffde;
 }
 
 
@@ -21,6 +21,30 @@
 }
 
 .button {
+  color: white;
+  background-color: rgba(0, 255, 255, 0.51);
+  border: 1px solid #61dafb;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.models {
+  color: white;
+  background-color: rgba(0, 255, 255, 0.51);
+  border: 1px solid #61dafb;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.units {
+  color: white;
+  background-color: rgba(0, 255, 255, 0.51);
+  border: 1px solid #61dafb;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.epochs {
   color: white;
   background-color: rgba(0, 255, 255, 0.51);
   border: 1px solid #61dafb;
