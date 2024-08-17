@@ -6,6 +6,7 @@
 
 .app {
   font-weight: 100;
+  margin-top: 1rem;
 }
 
 .plot {
@@ -54,6 +55,20 @@
 
 .prediction {
   font-size: larger;
+}
+
+.disclaimer {
+  font-family: cursive;
+  font-weight: lighter;
+  font-size: small;
+}
+
+.sequence {
+  color: white;
+  background-color: rgba(100, 255, 255, 0.342);
+  border: 1px solid #61dafb;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 

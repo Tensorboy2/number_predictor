@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import * as tf from '@tensorflow/tfjs';
-import { Line } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
 
 const RnnPredictor: React.FC = () => {
-  const [sequence, setSequence] = useState<number[]>([]);
+  const [sequence, setSequence] = useState<string>('');
   const [prediction, setPrediction] = useState<number | null>(null);
+  const [probabilities, setProbabilities] = useState<number[]>([])
   const [model, setModel] = useState<tf.LayersModel | null>(null);
   const [epochs, setEpochs] = useState(5);
   const [units, setUnits] = useState(10);
@@ -43,8 +44,9 @@ const RnnPredictor: React.FC = () => {
   useEffect(() => {
     if (model && sequence.length > 1) {
       setIsTraining(true); // Set training status to true
-      const inputTensor = tf.tensor(sequence.slice(0, -1)).reshape([sequence.length - 1, 1, 1]);
-      const targetTensor = tf.tensor(sequence.slice(1)).reshape([sequence.length - 1, 1]);
+      const seqArray = sequence.split('').map(Number);
+      const inputTensor = tf.tensor(seqArray.slice(0, -1)).reshape([seqArray.length - 1, 1, 1]);
+      const targetTensor = tf.tensor(seqArray.slice(1)).reshape([seqArray.length - 1, 1]);
 
       model.fit(inputTensor, targetTensor, {
         epochs,
@@ -58,16 +60,25 @@ const RnnPredictor: React.FC = () => {
           },
         },
       }).then(() => {
-        const lastInput = tf.tensor([sequence[sequence.length - 1]]).reshape([1, 1, 1]);
+        const lastInput = tf.tensor([seqArray[seqArray.length - 1]]).reshape([1, 1, 1]);
         const output = model.predict(lastInput) as tf.Tensor;
         setPrediction(tf.argMax(output, 1).dataSync()[0]);
+        setProbabilities(Array.from(output.dataSync()));
       });
     }
   }, [sequence, model, epochs]);
 
   // Handle user input
   const handleClick = (num: number) => {
-    setSequence([...sequence, num]);
+    setSequence(prev => prev + num);
+    setLossData([]); // Reset loss data for new training
+    setLabels([]);
+  };
+
+  // Handle direct editing of the sequence
+  const handleSequenceChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value.replace(/[^0-9]/g, ''); // Allow only digits
+    setSequence(input);
     setLossData([]); // Reset loss data for new training
     setLabels([]);
   };
@@ -103,16 +114,46 @@ const RnnPredictor: React.FC = () => {
         <label>Epochs: </label>
         <input className='epochs' type="number" value={epochs} onChange={handleEpochsChange} min="1" max="100" />
       </div>
+      <h3>Pick your numbers:</h3>
       <div className='buttonWrapper'>
         {Array.from({ length: 10 }, (_, i) => (
           <button className='button' key={i} onClick={() => handleClick(i)} disabled={isTraining}>{i}</button>
         ))}
       </div>
-      <div>Sequence: {sequence.join(', ')}</div>
-      <div className='prediction'>Prediction: {prediction !== null ? prediction : 'N/A'}</div>
+      <div>
+        <label>Sequence: </label>
+        <input className='sequence' type="text" value={sequence.split('')} onChange={handleSequenceChange} disabled={isTraining} />
+      </div>
 
       {isTraining && <div>Training in progress... <span className="spinner"></span></div>}
+      <div className='prediction'>Prediction: {prediction !== null ? prediction : 'N/A'}</div>
+      <div className='disclaimer'>Disclaimer: this is a small dataset on a small model, do not expect much...</div>
 
+
+      <div>
+        <h3>Output Probabilities</h3>
+        <Bar
+          className='plot'
+          data={{
+            labels: Array.from({ length: 10 }, (_, i) => i.toString()),
+            datasets: [{
+              label: 'Probability',
+              data: probabilities,
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              borderColor: 'rgba(54, 162, 235, 1)',
+              borderWidth: 1,
+            }]
+          }}
+          options={{
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 1,
+              }
+            }
+          }}
+        />
+      </div>
       <div>
         <h3>Training Loss Over Epochs</h3>
         <Line
@@ -129,7 +170,7 @@ const RnnPredictor: React.FC = () => {
           }}
         />
       </div>
-
+      <p>wow! You scrolled all the way down? The fun is up there ^.</p>
       <style>{`
         .spinner {
           border: 4px solid rgba(0, 0, 0, 0.1);
